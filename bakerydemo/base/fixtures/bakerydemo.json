@@ -236,6 +236,7 @@
     "content_object": 68
   }
 },
+
 {
   "model": "blog.blogpagetag",
   "pk": 89,
