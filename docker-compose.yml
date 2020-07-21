@@ -20,6 +20,7 @@ services:
     restart: always
     expose:
       - "9200"
+
   app:
     environment:
       DJANGO_SECRET_KEY: changeme
@@ -37,9 +38,24 @@ services:
       - elasticsearch:elasticsearch
     ports:
       - "8000:8000"
+# AZ (need for nginx)
+#    volumes_from:
+#      - webroot
     depends_on:
       - db
       - redis
       - elasticsearch
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    links:
+      - app
+    ports:
+      - "8000:8000"
+    volumes:
+      - webroot:/var/www/todobackend
+      
 volumes:
   media-root:
+

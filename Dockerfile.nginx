@@ -1,0 +1,5 @@
+FROM nginx
+MAINTAINER Jazav <name@gmail.com>
+ 
+# Copy bakerydemo nginx configuration file
+COPY bakerydemo.conf /etc/nginx/conf.d/bakerydemo.conf
