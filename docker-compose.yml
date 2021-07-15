@@ -1,61 +1,150 @@
-version: '2'
-
+version: '2.4'
 services:
-  db:
+  postgres:
     environment:
       POSTGRES_DB: app_db
       POSTGRES_USER: app_user
       POSTGRES_PASSWORD: changeme
+    #    env_file:
+    #      - ./db.env
     restart: always
-    image: postgres:9.6
+    image: postgres:13.3
+    networks:
+      - my_network
     expose:
       - "5432"
+    # publish port for test env only
+    # WE MUST comment it in production
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/data/postgres
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    networks:
+      - my_network
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_LISTEN_PORT: 5050
+      #PGADMIN_SERVER_JSON_FILE: servers.json
+      # Application log level - one of:
+      # CRITICAL 50, ERROR 40, WARNING 30, SQL 25, INFO 20, DEBUG 10, NOTSET 0
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 50
+      PGADMIN_CONFIG_FILE_LOG_LEVEL: 30
+      CONSOLE_LOG_FORMAT: '%(asctime)s: %(levelname)s\t%(name)s:\t%(message)s'
+      FILE_LOG_FORMAT: '%(asctime)s: %(levelname)s\t%(name)s:\t%(message)s'
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+      #PGADMIN_ENABLE_TLS: 'True'
+      #LOG_FILE: '/desired/path/to/pgadmin4.log'
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./pgadmin-config/servers.json:/pgadmin4/servers.json
+#      - ./pgadmin-config/.pgpass:/var/lib/pgadmin/storage/pgadmin4_pgadmin.org/.pgpass
   redis:
     restart: always
-    image: redis:3.0
+    image: redis:6.2.4
+    networks:
+      - my_network
     expose:
       - "6379"
   elasticsearch:
-    image: elasticsearch:2.3
+    image: elasticsearch:6.8.16
     restart: always
+    networks:
+      - my_network
     expose:
       - "9200"
-
   app:
     environment:
       DJANGO_SECRET_KEY: changeme
-      DATABASE_URL: postgres://app_user:changeme@db/app_db
+      # postgresql://user:password@host:port/db
+      DATABASE_URL: postgres://app_user:changeme@postgres:5432/app_db
       CACHE_URL: redis://redis
       ELASTICSEARCH_ENDPOINT: elasticsearch
+#      # for proxy
+      VIRTUAL_HOST: bakerydemo
+      # uwsgi, http or https
+      VIRTUAL_PROTO: uwsgi
+#      VIRTUAL_PORT: 3031
+      #ENABLE_ACME: 'true'
+      DEBUG: 'true'
     build:
       context: .
       dockerfile: ./Dockerfile
+    networks:
+      - my_network
     volumes:
       - media-root:/code/bakerydemo/media
-    links:
-      - db:db
-      - redis:redis
-      - elasticsearch:elasticsearch
+      - uwsgi-log:/var/log/uwsgi/
+      # we need it to get static files (images)
+      - webroot:/code/bakerydemo
+#      - tmp:/tmp
+#    links:
+#      - postgres:postgres
+#      - pgadmin:pgadmin
+#      - redis:redis
+#      - elasticsearch:elasticsearch
+    expose:
+#      - "8000"
+      - "3031"
     ports:
       - "8000:8000"
-# AZ (need for nginx)
-#    volumes_from:
-#      - webroot
     depends_on:
-      - db
+      - postgres
       - redis
       - elasticsearch
   nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile.nginx
-    links:
-      - app
+    image: roura/tengine
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.nginx
+    container_name: tengine
+    restart: on-failure
+    networks:
+      - my_network
     ports:
-      - "8000:8000"
+      - "8081:8080"
+    volumes_from:
+      - app:ro
     volumes:
-      - webroot:/var/www/todobackend
-      
+      - ./bakerydemo-nginx.conf:/etc/nginx/conf.d/bakerydemo-nginx.conf
+## we need it to unix sock only
+#      - tmp:/tmp:ro
+#  proxy:
+##      image: roura/tengine-proxy
+#      image: nginxproxy/nginx-proxy
+#      container_name: proxy
+#      restart: on-failure
+#      networks:
+#        - my_network
+#      ports:
+#      - "8082:8080"
+#      #- 443:443
+#      volumes_from:
+#        - app:ro
+#      volumes:
+#        - /var/run/docker.sock:/tmp/docker.sock:ro
+#        - ./proxy/certs:/etc/nginx/certs
+#        - ./proxy/acme:/acmecerts
+#        - ./proxy/conf.d:/etc/nginx/conf.d
+## we need it to unix sock only
+##        - tmp:/tmp:ro
 volumes:
+  webroot:
+    driver: local
   media-root:
+  postgres-data:
+  uwsgi-log:
+#  pgadmin-data:
+#  tmp:
+#    driver: local
+networks:
+  my_network:
+
+
 

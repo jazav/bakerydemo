@@ -10,6 +10,8 @@ done
 
 if [ "$1" = '/venv/bin/uwsgi' ]; then
     /venv/bin/python manage.py migrate --noinput
+# AZ Update elasticsearch indexes
+    /venv/bin/python manage.py update_index
 fi
 
 if [ "x$DJANGO_LOAD_INITIAL_DATA" = 'xon' ]; then

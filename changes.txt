@@ -1,0 +1,8 @@
+1. Added this snippet below to the ./bakerydemo/settings/base.py:
+# Added in Django 3.2
+# https://docs.djangoproject.com/en/3.2/releases/3.2/#customizing-type-of-auto-created-primary-keys
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+2. Added setup.py and updated ./ requirements/base.txt and production.txt
+3. Updated runtime.txt (python-3.9.5)
+4. reuirements/production.txt: unidecode
+6. Dockerfile added:     && /venv/bin/pip install -U setuptools \

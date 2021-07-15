@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "bakerydemo db",
+            "Group": "Servers",
+            "Host": "postgres",
+            "Port": 5432,
+            "Username": "app_user",
+            "SSLMode": "prefer",
+            "PassFile": "/.pgpass",
+            "MaintenanceDB": "app_db"
+        }
+    }
+}

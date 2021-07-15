@@ -33,6 +33,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # BASE_URL required for notification emails
 BASE_URL = 'http://localhost:8000'
 
+#db_from_env = dj_database_url.config(env="./db.env", conn_max_age=500)
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
 
@@ -51,7 +52,8 @@ if ELASTICSEARCH_ENDPOINT:
     from elasticsearch import RequestsHttpConnection
     WAGTAILSEARCH_BACKENDS = {
         'default': {
-            'BACKEND': 'wagtail.search.backends.elasticsearch2',
+            'BACKEND': 'wagtail.search.backends.elasticsearch6'
+                       '',
             'HOSTS': [{
                 'host': ELASTICSEARCH_ENDPOINT,
                 'port': int(os.getenv('ELASTICSEARCH_PORT', '9200')),

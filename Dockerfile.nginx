@@ -1,5 +1,7 @@
-FROM nginx
+#FROM nginx
+FROM roura/tengine
+#FROM roura/tengine-proxy
 MAINTAINER Jazav <name@gmail.com>
- 
-# Copy bakerydemo nginx configuration file
-COPY bakerydemo.conf /etc/nginx/conf.d/bakerydemo.conf
+
+    # Copy bakerydemo nginx configuration file
+COPY bakerydemo-nginx.conf /etc/nginx/conf.d/bakerydemo-nginx.conf
